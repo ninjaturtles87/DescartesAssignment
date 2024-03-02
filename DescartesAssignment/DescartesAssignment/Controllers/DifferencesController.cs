@@ -41,18 +41,18 @@ namespace DescartesAssignment.Controllers
             return StatusCode(StatusCodes.Status201Created);
         }
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetDifferences(int id)
+        public async Task<IActionResult> GetDifferencesAsync(int id)
         {
             //here we go to database and extrat elements for comparison
             List<DataForComparison> dataForComparisonList = await _dataAccess.GetDataByIdAsync(id);
 
             // check if values for comparison exist
-            var leftElement = dataForComparisonList.Where(x => x.Side == DataSide.Left.ToString()).FirstOrDefault();
+            var leftElement = dataForComparisonList.Where(x => x.Side == DataSide.Left.ToString().ToLower()).FirstOrDefault();
 
             if (leftElement is null )
                 return NotFound();
             
-            var rightElement = dataForComparisonList.Where(x => x.Side == DataSide.Right.ToString()).FirstOrDefault();
+            var rightElement = dataForComparisonList.Where(x => x.Side == DataSide.Right.ToString().ToLower()).FirstOrDefault();
             
             if (rightElement is null)
                 return NotFound();
