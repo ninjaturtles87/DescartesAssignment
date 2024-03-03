@@ -10,6 +10,6 @@ namespace DataLayer
     public interface IDataAccess
     {
         Task<List<DataForComparison>> GetDataById(int id);
-        Task<bool> SaveOrUpdate(DataForComparison dataForComparisons);
+        Task SaveOrUpdate(DataForComparison dataForComparisons);
     }
 }

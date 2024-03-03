@@ -11,10 +11,9 @@ namespace DescartesAssignment.IntegrationTests
     public class DifferentiatingApiTests
     {
         [TestMethod]
-        public async Task GetDifferencesAsync_ReturnsNotFound_WhenNothingIsPutInDb()
+        public async Task GetDifferencesAsync_ReturnsNotFound_WhenDbIsEmpty()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
+            var httpClient = GetClient();
 
             var response = await GetDifferencesAsync("v1/diff/1", httpClient);
 
@@ -23,19 +22,17 @@ namespace DescartesAssignment.IntegrationTests
         [TestMethod]
         public async Task SaveData_LeftSide_ReturnsCreated()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
+            var httpClient = GetClient();
 
-            var response = await PutValueToDbAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
+            var response = await CallSaveDataAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
 
             Assert.AreEqual(response.StatusCode, HttpStatusCode.Created);
         }
         [TestMethod]
         public async Task GetDifferencesAsync_ReturnsNotFound_WhenOnlyOneSideIsPutInDb()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
-            await PutValueToDbAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
+            var httpClient = GetClient();
+            await CallSaveDataAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
             var response = await GetDifferencesAsync("v1/diff/1", httpClient);
 
             Assert.AreEqual(response.StatusCode, HttpStatusCode.NotFound);
@@ -43,20 +40,18 @@ namespace DescartesAssignment.IntegrationTests
         [TestMethod]
         public async Task SaveData_RightSide_ReturnsCreated()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
+            var httpClient = GetClient();
 
-            var response = await PutValueToDbAsync("AAAAAA==", "/v1/diff/1/right", httpClient);
+            var response = await CallSaveDataAsync("AAAAAA==", "/v1/diff/1/right", httpClient);
 
             Assert.AreEqual(response.StatusCode, HttpStatusCode.Created);
         }
         [TestMethod]
         public async Task GetDifferencesAsync_ReturnsEquals()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
-            await PutValueToDbAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
-            await PutValueToDbAsync("AAAAAA==", "/v1/diff/1/right", httpClient);
+            var httpClient = GetClient();
+            await CallSaveDataAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
+            await CallSaveDataAsync("AAAAAA==", "/v1/diff/1/right", httpClient);
             var response = await GetDifferencesAsync("v1/diff/1", httpClient);
 
             DifferencesResponse differencesResponse = JsonConvert.DeserializeObject<DifferencesResponse>(response.Content.ReadAsStringAsync().Result);
@@ -66,10 +61,9 @@ namespace DescartesAssignment.IntegrationTests
         [TestMethod]
         public async Task GetDifferencesAsync_ReturnsContentDoNotMatchAndSpecifiedDifferences()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
-            await PutValueToDbAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
-            await PutValueToDbAsync("AQABAQ==", "/v1/diff/1/right", httpClient);
+            var httpClient = GetClient();
+            await CallSaveDataAsync("AAAAAA==", "/v1/diff/1/left", httpClient);
+            await CallSaveDataAsync("AQABAQ==", "/v1/diff/1/right", httpClient);
             var response = await GetDifferencesAsync("v1/diff/1", httpClient);
 
             DifferencesResponse differencesResponse = JsonConvert.DeserializeObject<DifferencesResponse>(response.Content.ReadAsStringAsync().Result);
@@ -84,10 +78,9 @@ namespace DescartesAssignment.IntegrationTests
         [TestMethod]
         public async Task GetDifferencesAsync_ReturnsSizeDoNotMatch()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
-            await PutValueToDbAsync("AAA=", "/v1/diff/1/left", httpClient);
-            await PutValueToDbAsync("AQABAQ==", "/v1/diff/1/right", httpClient);
+            var httpClient = GetClient();
+            await CallSaveDataAsync("AAA=", "/v1/diff/1/left", httpClient);
+            await CallSaveDataAsync("AQABAQ==", "/v1/diff/1/right", httpClient);
             var response = await GetDifferencesAsync("v1/diff/1", httpClient);
 
             DifferencesResponse differencesResponse = JsonConvert.DeserializeObject<DifferencesResponse>(response.Content.ReadAsStringAsync().Result);
@@ -97,10 +90,9 @@ namespace DescartesAssignment.IntegrationTests
         [TestMethod]
         public async Task SaveData_LeftSide_ReturnsBadRequest()
         {
-            var webAppFactory = new WebApplicationFactory<Program>();
-            var httpClient = webAppFactory.CreateDefaultClient();
+            var httpClient = GetClient();
 
-            var response = await PutValueToDbAsync(null, "/v1/diff/1/left", httpClient);
+            var response = await CallSaveDataAsync(null, "/v1/diff/1/left", httpClient);
 
             Assert.AreEqual(response.StatusCode, HttpStatusCode.BadRequest);
         }
@@ -109,12 +101,17 @@ namespace DescartesAssignment.IntegrationTests
         {
             return await client.GetAsync(requestUri);
         }
-        private async Task<HttpResponseMessage> PutValueToDbAsync(string data, string requestUri, HttpClient client)
+        private async Task<HttpResponseMessage> CallSaveDataAsync(string data, string requestUri, HttpClient client)
         {
             var cm = new ReceivedData();
             cm.Data = data;
             var stringContent = new StringContent(JsonConvert.SerializeObject(cm), Encoding.UTF8, "application/json");
             return await client.PutAsync(requestUri, stringContent);
+        }
+        private HttpClient GetClient()
+        {
+            var webAppFactory = new WebApplicationFactory<Program>();
+            return webAppFactory.CreateDefaultClient();
         }
     }
 }

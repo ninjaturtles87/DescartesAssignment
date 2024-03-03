@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DataLayer
 {
     
-    public sealed class Database
+    public class Database
     {
         public List<DataForComparison> DataForComparisonList { get; set; }
 

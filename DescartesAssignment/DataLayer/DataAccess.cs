@@ -22,17 +22,17 @@ namespace DataLayer
         {
             try
             {
-                _logger.LogInformation("Delivered requested data from database");
+                _logger.LogInformation("Requested data is delivered from database");
                 return Task.FromResult(_database.DataForComparisonList.Where(x => x.Id == id).ToList());
             }
             catch (Exception ex)
             {
-                _logger.LogError("Database error occuder");
+                _logger.LogError("Database error occured");
                 throw new Exception(ex.Message);
             }
         }
 
-        public Task<bool> SaveOrUpdate(DataForComparison dataForComparison)
+        public Task SaveOrUpdate(DataForComparison dataForComparison)
         {
             try
             {
@@ -47,12 +47,12 @@ namespace DataLayer
                     _logger.LogInformation("Existing data from database is updated with data from request");
                     listElement.Data = dataForComparison.Data;
                 }
-                return Task.FromResult(true);
+                return Task.CompletedTask;
             }
             catch (Exception ex)
             {
                 _logger.LogError("SaveOrUpdateAsync failed with message: " + ex.Message);
-                return Task.FromResult(false);
+                throw;
             }
         }
     }

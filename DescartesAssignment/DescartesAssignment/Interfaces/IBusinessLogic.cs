@@ -5,8 +5,8 @@ namespace DescartesAssignment.Interfaces
 {
     public interface IBusinessLogic
     {
-        public Task PutValuesToDb(DataForComparison dataForComparison);
+        Task PutValuesToDb(DataForComparison dataForComparison);
 
-        public Task<DifferenceResponseProperties> GetDifferences(int id);
+        Task<DifferenceResponseProperties> GetDifferences(int id);
     }
 }

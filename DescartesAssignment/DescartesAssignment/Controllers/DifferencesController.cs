@@ -22,7 +22,7 @@ namespace DescartesAssignment.Controllers
             _logger = logger;
         }
         [HttpPut("{id}/{side:regex(left|right)}")]
-        public async Task<IActionResult> SaveData(int id, string side, [FromBody] ReceivedData receivedData)
+        public async Task<IActionResult> SaveDataAsync(int id, string side, [FromBody] ReceivedData receivedData)
         {
             //If data received is not valid return bad request
             if (!receivedData.IsValid())
@@ -44,35 +44,36 @@ namespace DescartesAssignment.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Something went wrong with the request");
+                _logger.LogError("Something went wrong");
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDifferencesAsync(int id)
         {
+            DifferenceResponseProperties response = null;
+
             try
             {
-                var response = await _businessLogic.GetDifferences(id);
-
-                if (!response.HasData)
-                {
-                    _logger.LogInformation("Requested data does not exist in database");
-                    return NotFound();
-                }  
-
-                return Ok(new DifferencesResponse
-                {
-                    DiffResultType = response.DiffResultType,
-                    Diffs = response.Diffs
-                });
-
+                response = await _businessLogic.GetDifferences(id);
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Something went wrong with the request");
+                _logger.LogError("Something went wrong");
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
+
+            if (response == null || !response.HasData)
+            {
+                _logger.LogInformation("Requested data does not exist in database");
+                return NotFound();
+            }  
+
+            return Ok(new DifferencesResponse
+            {
+                DiffResultType = response.DiffResultType,
+                Diffs = response.Diffs
+            });
         }
     }
 }

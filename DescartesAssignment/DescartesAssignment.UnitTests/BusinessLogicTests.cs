@@ -51,30 +51,18 @@ namespace DescartesAssignment.UnitTests
         [Theory]
         [InlineData(DataSide.Left)]
         [InlineData(DataSide.Right)]
-        public async Task GetDifferences_WhenOneElementMissing_ReturnsDifferenceResponsePropertiesWithNoData(DataSide missingSide)
+        public async Task GetDifferences_WhenOneElementMissing_ReturnsDifferenceResponsePropertiesWithNoData(DataSide dataSide)
         {
             int id = 1;
+            byte[] data = new byte[] { 1, 2, 4 };
             var dataForComparisonList = new List<DataForComparison>();
-            if (missingSide == DataSide.Left)
-            {
-                dataForComparisonList.Add(
-                    new DataForComparison
-                    {
-                        Id = id,
-                        Side = DataSide.Right.ToString().ToLower(),
-                        Data = new byte[] { 1, 2, 4 }
-                    });
-            }
-            else
-            {
-                dataForComparisonList.Add(
-                    new DataForComparison
-                    {
-                        Id = id,
-                        Side = DataSide.Left.ToString().ToLower(),
-                        Data = new byte[] { 1, 2, 3 }
-                    });
-            }
+            dataForComparisonList.Add(
+                new DataForComparison
+                {
+                    Id = id,
+                    Side = dataSide.ToString().ToLower(),
+                    Data = data
+                });
             _dataAccessMock.Setup(x => x.GetDataById(id)).Returns(Task.FromResult(dataForComparisonList));
 
             var result = await _businessLogic.GetDifferences(id);
