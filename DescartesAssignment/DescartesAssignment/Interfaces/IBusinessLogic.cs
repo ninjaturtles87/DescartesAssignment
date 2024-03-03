@@ -7,6 +7,6 @@ namespace DescartesAssignment.Interfaces
     {
         public Task PutValuesToDb(DataForComparison dataForComparison);
 
-        public Task<DifferencesResponse> GetDifferences(byte[] firstArray, byte[] secondArray);
+        public Task<DifferenceResponseProperties> GetDifferences(int id);
     }
 }

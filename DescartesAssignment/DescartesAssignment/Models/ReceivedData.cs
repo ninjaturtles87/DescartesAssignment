@@ -7,6 +7,7 @@ namespace DescartesAssignment.Models
     {
         [Required]
         public string Data { get; set; }
+
         // Data is valid if it is not null and is of type Byte[]
         public bool IsValid()
         {

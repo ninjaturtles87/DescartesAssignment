@@ -10,7 +10,7 @@
     <ProjectReference Include="..\DataLayer\DataLayer.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="DescartesAssignment.IntegrationTests"/>
+    <InternalsVisibleTo Include="DescartesAssignment.IntegrationTests" />
   </ItemGroup>
 </Project>
 

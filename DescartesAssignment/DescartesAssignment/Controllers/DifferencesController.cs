@@ -14,12 +14,10 @@ namespace DescartesAssignment.Controllers
     public class DifferencesController : ControllerBase
     {
         private readonly IBusinessLogic _businessLogic;
-        private readonly IDataAccess _dataAccess;
 
-        public DifferencesController(IBusinessLogic businessLogic, IDataAccess dataAccess)
+        public DifferencesController(IBusinessLogic businessLogic)
         {
             _businessLogic = businessLogic;
-            _dataAccess = dataAccess;
         }
         [HttpPut("{id}/{side:regex(left|right)}")]
         public async Task<IActionResult> SaveData(int id, string side, [FromBody] ReceivedData receivedData)
@@ -43,22 +41,16 @@ namespace DescartesAssignment.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDifferencesAsync(int id)
         {
-            //here we go to database and extrat elements for comparison
-            List<DataForComparison> dataForComparisonList = await _dataAccess.GetDataByIdAsync(id);
+            var response = await _businessLogic.GetDifferences(id);
 
-            // check if values for comparison exist
-            var leftElement = dataForComparisonList.Where(x => x.Side == DataSide.Left.ToString().ToLower()).FirstOrDefault();
+            if(!response.HasData)
+                return NotFound();
 
-            if (leftElement is null )
-                return NotFound();
-            
-            var rightElement = dataForComparisonList.Where(x => x.Side == DataSide.Right.ToString().ToLower()).FirstOrDefault();
-            
-            if (rightElement is null)
-                return NotFound();
-            //here we are sure that values exist, so we compare them
-            var response = await _businessLogic.GetDifferences(leftElement.Data, rightElement.Data);
-            return Ok(response);
+            return Ok(new DifferencesResponse
+            {
+                DiffResultType= response.DiffResultType,
+                Diffs= response.Diffs
+            });
         }
     }
 }

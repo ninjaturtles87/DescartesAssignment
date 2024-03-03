@@ -1,5 +1,6 @@
 ﻿using DataLayer;
 using DataLayer.Models;
+using DescartesAssignment.Helpers;
 using DescartesAssignment.Interfaces;
 using DescartesAssignment.Models;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -17,81 +18,48 @@ namespace DescartesAssignment.Services
             _dataAccess = dataAccess;
         }
 
-        public async Task<DifferencesResponse> GetDifferences(byte[] firstArray, byte[] secondArray)
+        public async Task<DifferenceResponseProperties> GetDifferences(int id)
         {
+
+            DifferenceResponseProperties responseProperties = new DifferenceResponseProperties { HasData = false };
+            
+            //here is getting elements from database for comparison
+            List<DataForComparison> dataForComparisonList = await _dataAccess.GetDataByIdAsync(id);
+
+            //check if values for comparison on both sides exist
+            var leftElement = dataForComparisonList.Where(x => x.Side == DataSide.Left.ToString().ToLower()).FirstOrDefault();
+            if (leftElement is null)
+                return responseProperties;
+            
+            var rightElement = dataForComparisonList.Where(x => x.Side == DataSide.Right.ToString().ToLower()).FirstOrDefault();
+            if (rightElement is null) 
+                return responseProperties;
+
+            responseProperties.HasData = true;
+
             //check if data length do not match
-            if(firstArray.Length != secondArray.Length)
+            if (leftElement.Data.Length != rightElement.Data.Length)
             {
-                return new DifferencesResponse
-                {
-                    DiffResultType = DifferenceTypeEnums.SizeDoNotMatch.ToString(),
-                };
+                responseProperties.DiffResultType = DifferenceTypeEnums.SizeDoNotMatch.ToString();
+                return responseProperties;
             }
-            //check if data length and data content match
-            if (AreElementsEqual(firstArray, secondArray))
-            {
-                return new DifferencesResponse
-                {
-                    DiffResultType = DifferenceTypeEnums.Equals.ToString(),
-                };
-            }
-            //at this point we are certain that data are the same size but are not of similar content
-            return new DifferencesResponse
-            {
-                DiffResultType = DifferenceTypeEnums.ContentDoNotMatch.ToString(),
-                Diffs = GetDifferencesSpecifications(firstArray, secondArray)
-            };
+
+            //check if data length and data content match and if not, return differencies specified.
+            var differencesSpecified = DifferentiatingHelper.GetDifferencesSpecifications(leftElement.Data, rightElement.Data);
+
+            if(differencesSpecified.Count == 0)
+                responseProperties.DiffResultType = DifferenceTypeEnums.Equals.ToString();
+            else
+                responseProperties.DiffResultType = DifferenceTypeEnums.ContentDoNotMatch.ToString();
+
+            responseProperties.Diffs = differencesSpecified;
+            return responseProperties;
+
         }
 
         public async Task PutValuesToDb(DataForComparison dataForComparison)
         {
-            
             await _dataAccess.SaveOrUpdateAsync(dataForComparison);
         }
-
-        private static bool AreElementsEqual(byte[] firstArray, byte[] secondArray)
-        {
-            for (int i = 0; i < firstArray.Length; i++)
-            {
-                if (firstArray[i] != secondArray[i])
-                    return false;
-            }
-
-            return true;
-        }
-
-        private static List<DifferencesSpecified> GetDifferencesSpecifications(byte[] firstArray, byte[] secondArray)
-        {
-            List<DifferencesSpecified> differences = new List<DifferencesSpecified>();
-
-            // We will store first index where values don't align. 
-            int startIndex = -1;
-            for (int i = 0; i < firstArray.Length; i++)
-            {
-                if (firstArray[i] != secondArray[i])
-                {
-                    // Found difference. If this is difference the first difference then we memorize the index.
-                    if (startIndex == -1)
-                        startIndex = i;
-                }
-                else
-                    if (startIndex != -1)
-                    {
-                        differences.Add(new DifferencesSpecified 
-                        { 
-                            Offset = startIndex, Length = i - startIndex 
-                        });
-                        startIndex = -1; // we set this difference index to default value so we know that we didn't find any differences from the last one.
-                    }
-            }
-            // We finished the loop and now we just need to check if difference index is different than default value (-1). If it's different then this means that there are differences from that index until the end
-            if (startIndex != -1)
-                differences.Add(new DifferencesSpecified 
-                { 
-                    Offset = startIndex, Length = firstArray.Length - startIndex 
-                });
-            return differences;
-        }
-
     }
 }
