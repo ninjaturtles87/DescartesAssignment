@@ -14,10 +14,12 @@ namespace DescartesAssignment.Controllers
     public class DifferencesController : ControllerBase
     {
         private readonly IBusinessLogic _businessLogic;
+        private readonly ILogger<DifferencesController> _logger;
 
-        public DifferencesController(IBusinessLogic businessLogic)
+        public DifferencesController(IBusinessLogic businessLogic, ILogger<DifferencesController> logger)
         {
             _businessLogic = businessLogic;
+            _logger = logger;
         }
         [HttpPut("{id}/{side:regex(left|right)}")]
         public async Task<IActionResult> SaveData(int id, string side, [FromBody] ReceivedData receivedData)
@@ -25,6 +27,7 @@ namespace DescartesAssignment.Controllers
             //If data received is not valid return bad request
             if (!receivedData.IsValid())
             {
+                _logger.LogInformation("Data received from request is either null or not of proper type");
                 return BadRequest();
             }
 
@@ -34,23 +37,42 @@ namespace DescartesAssignment.Controllers
                 Side = side,
                 Data = Convert.FromBase64String(receivedData.Data)
             };
-
-            await _businessLogic.PutValuesToDb(data);
-            return StatusCode(StatusCodes.Status201Created);
+            try
+            {
+                await _businessLogic.PutValuesToDb(data);
+                return StatusCode(StatusCodes.Status201Created);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Something went wrong with the request");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDifferencesAsync(int id)
         {
-            var response = await _businessLogic.GetDifferences(id);
-
-            if(!response.HasData)
-                return NotFound();
-
-            return Ok(new DifferencesResponse
+            try
             {
-                DiffResultType= response.DiffResultType,
-                Diffs= response.Diffs
-            });
+                var response = await _businessLogic.GetDifferences(id);
+
+                if (!response.HasData)
+                {
+                    _logger.LogInformation("Requested data does not exist in database");
+                    return NotFound();
+                }  
+
+                return Ok(new DifferencesResponse
+                {
+                    DiffResultType = response.DiffResultType,
+                    Diffs = response.Diffs
+                });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Something went wrong with the request");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
     }
 }

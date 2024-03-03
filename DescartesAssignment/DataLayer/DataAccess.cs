@@ -4,40 +4,54 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DataLayer
 {
     public class DataAccess : IDataAccess
     {
         private readonly Database _database;
+        private readonly ILogger<DataAccess> _logger;
 
-        public DataAccess(Database database)
+        public DataAccess(Database database, ILogger<DataAccess> logger)
         {
             _database = database;
+            _logger = logger;
         }
-        public Task<List<DataForComparison>> GetDataByIdAsync(int id)
+        public Task<List<DataForComparison>> GetDataById(int id)
         {
-            return Task.FromResult(_database.DataForComparisonList.Where(x => x.Id == id).ToList());
+            try
+            {
+                _logger.LogInformation("Delivered requested data from database");
+                return Task.FromResult(_database.DataForComparisonList.Where(x => x.Id == id).ToList());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Database error occuder");
+                throw new Exception(ex.Message);
+            }
         }
 
-        public Task<bool> SaveOrUpdateAsync(DataForComparison dataForComparison)
+        public Task<bool> SaveOrUpdate(DataForComparison dataForComparison)
         {
             try
             {
                 //check if there are existing elements in list with the received Id and type(left/right) - add new element if not and update it if the element exists
                 DataForComparison? listElement = _database.DataForComparisonList.Where(x => x.Id == dataForComparison.Id && x.Side == dataForComparison.Side).FirstOrDefault();
                 if (listElement is null) {
+                    _logger.LogInformation("Data from request is added to database");
                     _database.DataForComparisonList.Add(dataForComparison);
                 }
                 else
                 {
+                    _logger.LogInformation("Existing data from database is updated with data from request");
                     listElement.Data = dataForComparison.Data;
                 }
                 return Task.FromResult(true);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("SaveOrUpdateAsync failed: " + ex.Message);
+                _logger.LogError("SaveOrUpdateAsync failed with message: " + ex.Message);
                 return Task.FromResult(false);
             }
         }

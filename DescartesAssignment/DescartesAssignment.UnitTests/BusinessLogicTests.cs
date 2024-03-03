@@ -2,6 +2,7 @@ using DataLayer;
 using DataLayer.Models;
 using DescartesAssignment.Models;
 using DescartesAssignment.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Reflection;
 using static DescartesAssignment.Enums;
@@ -12,11 +13,13 @@ namespace DescartesAssignment.UnitTests
     {
         private readonly Mock<IDataAccess> _dataAccessMock;
         private readonly BusinessLogic _businessLogic;
+        private readonly Mock<ILogger<BusinessLogic>> _loggerMock;
 
         public BusinessLogicTests()
         {
             _dataAccessMock = new Mock<IDataAccess>();
-            _businessLogic = new BusinessLogic(_dataAccessMock.Object);
+            _loggerMock = new Mock<ILogger<BusinessLogic>>();
+            _businessLogic = new BusinessLogic(_dataAccessMock.Object, _loggerMock.Object);
         }
 
         [Fact]
@@ -34,7 +37,7 @@ namespace DescartesAssignment.UnitTests
                     Id = id, Side = DataSide.Right.ToString().ToLower(), Data = new byte[] { 1, 2, 4 }
                 }
             };
-            _dataAccessMock.Setup(x => x.GetDataByIdAsync(id)).ReturnsAsync(dataForComparisonList);
+            _dataAccessMock.Setup(x => x.GetDataById(id)).Returns(Task.FromResult(dataForComparisonList));
 
             var result = await _businessLogic.GetDifferences(id);
 
@@ -72,7 +75,7 @@ namespace DescartesAssignment.UnitTests
                         Data = new byte[] { 1, 2, 3 }
                     });
             }
-            _dataAccessMock.Setup(x => x.GetDataByIdAsync(id)).ReturnsAsync(dataForComparisonList);
+            _dataAccessMock.Setup(x => x.GetDataById(id)).Returns(Task.FromResult(dataForComparisonList));
 
             var result = await _businessLogic.GetDifferences(id);
 
@@ -84,7 +87,7 @@ namespace DescartesAssignment.UnitTests
         {
             int id = 1;
             var dataForComparisonList = new List<DataForComparison>();
-            _dataAccessMock.Setup(x => x.GetDataByIdAsync(id)).ReturnsAsync(dataForComparisonList);
+            _dataAccessMock.Setup(x => x.GetDataById(id)).Returns(Task.FromResult(dataForComparisonList));
 
             var result = await _businessLogic.GetDifferences(id);
 
@@ -92,13 +95,13 @@ namespace DescartesAssignment.UnitTests
         }
 
         [Fact]
-        public async Task PutValuesToDb_CallsSaveOrUpdateAsync()
+        public async Task PutValuesToDb_CallsSaveOrUpdate()
         {
             var dataForComparison = new DataForComparison();
 
             await _businessLogic.PutValuesToDb(dataForComparison);
 
-            _dataAccessMock.Verify(x => x.SaveOrUpdateAsync(dataForComparison), Times.Once);
+            _dataAccessMock.Verify(x => x.SaveOrUpdate(dataForComparison), Times.Once);
         }
     }
 }

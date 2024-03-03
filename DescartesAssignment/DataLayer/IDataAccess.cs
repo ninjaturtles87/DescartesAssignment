@@ -9,7 +9,7 @@ namespace DataLayer
 {
     public interface IDataAccess
     {
-        Task<List<DataForComparison>> GetDataByIdAsync(int id);
-        Task<bool> SaveOrUpdateAsync(DataForComparison dataForComparisons);
+        Task<List<DataForComparison>> GetDataById(int id);
+        Task<bool> SaveOrUpdate(DataForComparison dataForComparisons);
     }
 }
