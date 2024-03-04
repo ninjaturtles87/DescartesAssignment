@@ -18,12 +18,12 @@ namespace DataLayer
             _database = database;
             _logger = logger;
         }
-        public Task<List<DataForComparison>> GetDataById(int id)
+        public async Task<List<DataForComparison>> GetDataById(int id)
         {
             try
             {
                 _logger.LogInformation("Requested data is delivered from database");
-                return Task.FromResult(_database.DataForComparisonList.Where(x => x.Id == id).ToList());
+                return await Task.Run(() => _database.DataForComparisonList.Where(x => x.Id == id).ToList());
             }
             catch (Exception ex)
             {
@@ -32,12 +32,12 @@ namespace DataLayer
             }
         }
 
-        public Task SaveOrUpdate(DataForComparison dataForComparison)
+        public async Task SaveOrUpdate(DataForComparison dataForComparison)
         {
             try
             {
                 //check if there are existing elements in list with the received Id and type(left/right) - add new element if not and update it if the element exists
-                DataForComparison? listElement = _database.DataForComparisonList.Where(x => x.Id == dataForComparison.Id && x.Side == dataForComparison.Side).FirstOrDefault();
+                DataForComparison? listElement = await Task.Run(() => _database.DataForComparisonList.Where(x => x.Id == dataForComparison.Id && x.Side == dataForComparison.Side).FirstOrDefault());
                 if (listElement is null) {
                     _logger.LogInformation("Data from request is added to database");
                     _database.DataForComparisonList.Add(dataForComparison);
@@ -47,7 +47,6 @@ namespace DataLayer
                     _logger.LogInformation("Existing data from database is updated with data from request");
                     listElement.Data = dataForComparison.Data;
                 }
-                return Task.CompletedTask;
             }
             catch (Exception ex)
             {

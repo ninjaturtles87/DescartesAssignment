@@ -29,7 +29,7 @@ namespace DescartesAssignment.Services
             try
             {
                 //getting elements from database for comparison
-                dataForComparisonList = await Task.Run(() => _dataAccess.GetDataById(id));
+                dataForComparisonList = await _dataAccess.GetDataById(id);
             }
             catch (Exception ex)
             {
@@ -72,7 +72,7 @@ namespace DescartesAssignment.Services
         {
             try
             {
-               await Task.Run(() => _dataAccess.SaveOrUpdate(dataForComparison));
+               await _dataAccess.SaveOrUpdate(dataForComparison);
             }
             catch (Exception ex)
             {
